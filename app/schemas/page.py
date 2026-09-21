@@ -1,5 +1,6 @@
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
+from app.schemas.image import ImageRead
 
 
 class PageBase(BaseModel):
@@ -7,7 +8,6 @@ class PageBase(BaseModel):
     sidecard: dict[str, Any] | None = None
     content: str = ""
     slug: str | None = Field(default=None, max_length=255)
-    images: int | None = None
 
 
 class PageCreate(PageBase):
@@ -20,7 +20,6 @@ class PageUpdate(BaseModel):
     sidecard: dict[str, Any] | None = None
     content: str | None = None
     slug: str | None = Field(default=None, max_length=255)
-    images: int | None = None
     category_ids: list[int] | None = None
     tag_ids: list[int] | None = None
 
@@ -37,6 +36,7 @@ class PageRead(PageBase):
     id: int
     categories: list["CategoryRead"]
     tags: list["TagRead"]
+    images: list[ImageRead]
     outgoing_page_ids: list[int]
     incoming_page_ids: list[int]
 

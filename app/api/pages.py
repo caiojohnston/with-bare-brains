@@ -1,10 +1,11 @@
+import boto3
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session, selectinload
 from slugify import slugify
 
-from app.core import get_db
-from app.models import Category, Page, Tag, PageLink
+from app.core import get_db, settings
+from app.models import Category, Image, Page, Tag, PageLink
 from app.schemas import PageCreate, PageRead, PageSummary, PageUpdate
 
 router = APIRouter(prefix="/pages", tags=["pages"])
@@ -29,19 +30,33 @@ def get_page_query():
     return select(Page).options(
         selectinload(Page.categories),
         selectinload(Page.tags),
+        selectinload(Page.images),
         selectinload(Page.outgoing_links),
         selectinload(Page.incoming_links),
     )
 
 
 def serialize_page(page: Page) -> dict:
+    def get_public_url(storage_key: str) -> str:
+        return f"{settings.r2_public_domain}/{storage_key}"
+
     return {
         "id": page.id,
         "title": page.title,
         "sidecard": page.sidecard,
         "content": page.content,
         "slug": page.slug,
-        "images": page.images,
+        "images": [
+            {
+                "id": img.id,
+                "page_id": img.page_id,
+                "storage_key": img.storage_key,
+                "alt_text": img.alt_text,
+                "mime_type": img.mime_type,
+                "public_url": get_public_url(img.storage_key),
+            }
+            for img in page.images
+        ],
         "categories": page.categories,
         "tags": page.tags,
         "outgoing_page_ids": [x.destiny_id for x in page.outgoing_links],
@@ -68,7 +83,6 @@ def create_page(payload: PageCreate, db: Session = Depends(get_db)):
         sidecard=payload.sidecard,
         content=payload.content,
         slug=unique_slug(db, payload.slug or payload.title),
-        images=payload.images,
         categories=categories,
         tags=tags,
     )
@@ -90,7 +104,20 @@ def list_pages(
 ):
     stmt = select(Page).distinct()
     if q:
-        stmt = stmt.where(Page.title.ilike(f"%{q}%"))
+        query = func.plainto_tsquery(
+            "portuguese", q
+        )
+
+        stmt = (
+            select(Page)
+            .where(Page.search_vector.op("@@")(query))
+            .order_by(
+                func.ts_rank(
+                    Page.search_vector,
+                    query
+                ).desc()
+            )
+        )
     if category_id is not None:
         stmt = stmt.join(Page.categories).where(Category.id == category_id)
     if tag_id is not None:
@@ -142,9 +169,24 @@ def update_page(page_id: int, payload: PageUpdate, db: Session = Depends(get_db)
 
 @router.delete("/{page_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_page(page_id: int, db: Session = Depends(get_db)):
-    page = db.get(Page, page_id)
+    page = db.scalar(get_page_query().where(Page.id == page_id))
     if not page:
         raise HTTPException(404, "Page not found")
+
+    # Delete images from R2 before deleting page
+    if page.images:
+        try:
+            r2_client = boto3.client(
+                "s3",
+                endpoint_url=f"https://{settings.r2_account_id}.r2.cloudflarestorage.com",
+                aws_access_key_id=settings.r2_access_key_id,
+                aws_secret_access_key=settings.r2_secret_access_key,
+            )
+            for image in page.images:
+                r2_client.delete_object(Bucket=settings.r2_bucket, Key=image.storage_key)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to delete images from R2: {str(e)}")
+
     db.delete(page)
     db.commit()
 

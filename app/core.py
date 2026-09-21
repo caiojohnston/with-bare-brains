@@ -6,6 +6,14 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/knowledge_base"
     api_prefix: str = "/api/v1"
+
+    # R2 Storage Configuration
+    r2_access_key_id: str
+    r2_secret_access_key: str
+    r2_account_id: str
+    r2_bucket: str
+    r2_public_domain: str
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

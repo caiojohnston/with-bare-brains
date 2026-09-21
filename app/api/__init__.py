@@ -1,1 +1,1 @@
-from app.api import categories, pages, tags
+from app.api import categories, images, pages, tags
