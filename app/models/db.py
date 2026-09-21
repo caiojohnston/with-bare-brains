@@ -35,6 +35,19 @@ class Page(Base):
         nullable=True
     )
 
+    categories: Mapped[list["Category"]] = relationship(
+        secondary="page_categories", back_populates="pages"
+    )
+    tags: Mapped[list["Tag"]] = relationship(
+        secondary="page_tags", back_populates="pages"
+    )
+    outgoing_links: Mapped[list["PageLink"]] = relationship(
+        foreign_keys="PageLink.origin_id", back_populates="origin", cascade="all, delete-orphan"
+    )
+    incoming_links: Mapped[list["PageLink"]] = relationship(
+        foreign_keys="PageLink.destiny_id", back_populates="destiny", cascade="all, delete-orphan"
+    )
+
 
 class Tag(Base):
     __tablename__ = "tags"
