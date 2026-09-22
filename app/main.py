@@ -11,7 +11,10 @@ app = FastAPI()
 # Quando for pra producao (passo 8, Railway), troca "*" pelo dominio real do front-end.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://with-bare-brains-production.up.railway.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

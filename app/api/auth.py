@@ -23,7 +23,7 @@ def login(request: LoginRequest, response: Response):
         key="auth_token",
         value=token,
         httponly=True,
-        secure=False,  # True em produção com HTTPS
+        secure=True,  # True em produção com HTTPS
         samesite="lax",
         max_age=30 * 24 * 60 * 60,  # 30 dias
     )
