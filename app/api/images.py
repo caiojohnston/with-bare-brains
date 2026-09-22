@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import require_auth
 from app.core import get_db, settings
 from app.models import Image
 from app.schemas import ImageRead
@@ -54,6 +55,7 @@ async def upload_image(
     file: UploadFile = File(...),
     alt_text: str = Form(..., description="Alt text for accessibility"),
     db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
 ):
     """
     Upload an image to R2 and create a database record.
@@ -140,7 +142,11 @@ async def get_page_images(page_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{image_id}")
-async def delete_image(image_id: int, db: Session = Depends(get_db)):
+async def delete_image(
+    image_id: int,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     """Delete an image from database and R2 storage."""
     image = db.scalar(select(Image).where(Image.id == image_id))
     if not image:

@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     r2_bucket: str
     r2_public_domain: str
 
+    # Admin authentication
+    admin_password: str
+    jwt_secret_key: str
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

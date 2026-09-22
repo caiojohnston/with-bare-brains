@@ -4,6 +4,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session, selectinload
 from slugify import slugify
 
+from app.auth import require_auth
 from app.core import get_db, settings
 from app.models import Category, Image, Page, Tag, PageLink
 from app.schemas import PageCreate, PageRead, PageSummary, PageUpdate
@@ -65,7 +66,11 @@ def serialize_page(page: Page) -> dict:
 
 
 @router.post("", response_model=PageRead, status_code=status.HTTP_201_CREATED)
-def create_page(payload: PageCreate, db: Session = Depends(get_db)):
+def create_page(
+    payload: PageCreate,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     if db.scalar(select(Page).where(Page.title == payload.title)):
         raise HTTPException(409, "A page with this title already exists")
 
@@ -134,7 +139,12 @@ def get_page(page_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{page_id}", response_model=PageRead)
-def update_page(page_id: int, payload: PageUpdate, db: Session = Depends(get_db)):
+def update_page(
+    page_id: int,
+    payload: PageUpdate,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     page = db.scalar(get_page_query().where(Page.id == page_id))
     if not page:
         raise HTTPException(404, "Page not found")
@@ -168,7 +178,11 @@ def update_page(page_id: int, payload: PageUpdate, db: Session = Depends(get_db)
 
 
 @router.delete("/{page_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_page(page_id: int, db: Session = Depends(get_db)):
+def delete_page(
+    page_id: int,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     page = db.scalar(get_page_query().where(Page.id == page_id))
     if not page:
         raise HTTPException(404, "Page not found")
@@ -192,7 +206,12 @@ def delete_page(page_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{page_id}/links/{destiny_id}", status_code=status.HTTP_201_CREATED)
-def create_link(page_id: int, destiny_id: int, db: Session = Depends(get_db)):
+def create_link(
+    page_id: int,
+    destiny_id: int,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     if page_id == destiny_id:
         raise HTTPException(400, "A page cannot link to itself")
     if not db.get(Page, page_id) or not db.get(Page, destiny_id):
@@ -205,7 +224,12 @@ def create_link(page_id: int, destiny_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{page_id}/links/{destiny_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_link(page_id: int, destiny_id: int, db: Session = Depends(get_db)):
+def delete_link(
+    page_id: int,
+    destiny_id: int,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     link = db.get(PageLink, (page_id, destiny_id))
     if not link:
         raise HTTPException(404, "Link not found")

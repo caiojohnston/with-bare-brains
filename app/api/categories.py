@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import require_auth
 from app.core import get_db
 from app.models import Category
 from app.schemas import CategoryCreate, CategoryRead, CategoryTree, CategoryUpdate
@@ -20,7 +21,11 @@ def build_tree(categories: list[Category], parent_id=None):
 
 
 @router.post("", response_model=CategoryRead, status_code=status.HTTP_201_CREATED)
-def create_category(payload: CategoryCreate, db: Session = Depends(get_db)):
+def create_category(
+    payload: CategoryCreate,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     if db.scalar(select(Category).where(Category.category_name == payload.category_name)):
         raise HTTPException(409, "Category already exists")
     if payload.parent_id is not None and not db.get(Category, payload.parent_id):
@@ -41,7 +46,12 @@ def category_tree(db: Session = Depends(get_db)):
 
 
 @router.patch("/{category_id}", response_model=CategoryRead)
-def update_category(category_id: int, payload: CategoryUpdate, db: Session = Depends(get_db)):
+def update_category(
+    category_id: int,
+    payload: CategoryUpdate,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     category = db.get(Category, category_id)
     if not category:
         raise HTTPException(404, "Category not found")
@@ -59,7 +69,11 @@ def update_category(category_id: int, payload: CategoryUpdate, db: Session = Dep
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_category(category_id: int, db: Session = Depends(get_db)):
+def delete_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
     category = db.get(Category, category_id)
     if not category:
         raise HTTPException(404, "Category not found")
