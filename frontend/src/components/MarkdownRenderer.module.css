@@ -1,0 +1,72 @@
+.prose {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-text);
+}
+
+.prose :global(h1) {
+  font-size: var(--text-xl);
+}
+.prose :global(h2) {
+  font-size: var(--text-xl);
+}
+.prose :global(h3) {
+  font-size: var(--text-lg);
+}
+.prose :global(h4) {
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.prose :global(> *:first-child) {
+  margin-top: 0;
+}
+
+.prose :global(li) {
+  margin-bottom: var(--space-2);
+}
+
+.prose :global(li > p) {
+  margin-bottom: var(--space-2);
+}
+
+.prose :global(strong) {
+  font-weight: 700;
+}
+
+.prose img {
+  max-width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  margin: var(--space-2) 0;
+}
+
+.prose :global(.hljs) {
+  color: var(--color-text);
+}
+.prose :global(.hljs-keyword),
+.prose :global(.hljs-tag) {
+  color: var(--color-accent);
+}
+.prose :global(.hljs-string),
+.prose :global(.hljs-attr) {
+  color: #a8763e;
+}
+.prose :global(.hljs-comment) {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.prose :global(.hljs-number),
+.prose :global(.hljs-literal) {
+  color: #7a5cb0;
+}
+.prose :global(.hljs-title),
+.prose :global(.hljs-name),
+.prose :global(.hljs-built_in) {
+  color: var(--color-danger);
+}
+.prose :global(.hljs-comment),
+.prose :global(.hljs-deletion) {
+  opacity: 0.85;
+}

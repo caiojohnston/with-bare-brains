@@ -1,0 +1,38 @@
+.form {
+  display: flex;
+  flex: 1;
+  max-width: 28rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.form:focus-within {
+  border-color: var(--color-accent);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-bg-raised);
+  border: none;
+  padding: var(--space-3) var(--space-4);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.button {
+  flex: none;
+  background: var(--color-bg-hover);
+  border: none;
+  border-left: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.button:hover {
+  background: var(--color-hover-strong);
+  color: var(--color-bg);
+}

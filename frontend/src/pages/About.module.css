@@ -1,0 +1,23 @@
+.wrap {
+  max-width: var(--reading-width-wide);
+  margin: 0 auto;
+}
+
+.title {
+  font-size: var(--text-xxl);
+  margin: 0 0 var(--space-6);
+}
+
+.text {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-text);
+}
+
+.citation {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  color: var(--color-text-muted);
+  margin-top: var(--space-3);
+}
