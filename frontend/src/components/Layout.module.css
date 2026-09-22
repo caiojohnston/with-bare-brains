@@ -49,6 +49,9 @@
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  padding: 0;
 }
 .navLink:hover {
   color: var(--color-text);

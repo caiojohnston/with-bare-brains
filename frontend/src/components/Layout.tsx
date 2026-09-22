@@ -1,9 +1,17 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useTheme } from "../hooks/useTheme";
+import { useAuth } from "../auth/AuthContext";
 import styles from "./Layout.module.css";
 
 export function Layout() {
   const { theme, toggle } = useTheme();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await logout();
+    navigate("/");
+  }
 
   return (
     <div className={styles.shell}>
@@ -16,6 +24,11 @@ export function Layout() {
           <Link to="/sobre" className={styles.navLink}>
             Sobre
           </Link>
+          {isAuthenticated && (
+            <button className={styles.navLink} onClick={handleLogout} title="Sair">
+              Sair
+            </button>
+          )}
           <Link
             to="/novo"
             className={styles.newButton}

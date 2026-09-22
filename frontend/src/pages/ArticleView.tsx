@@ -7,6 +7,7 @@ import { Sidecard } from "../components/Sidecard";
 import { LinkedPageRef } from "../components/LinkedPageRef";
 import { TableOfContents } from "../components/TableOfContents";
 import { readingTime } from "../lib/readingTime";
+import { useAuth } from "../auth/AuthContext";
 import styles from "./ArticleView.module.css";
 
 export function ArticleView() {
@@ -14,6 +15,7 @@ export function ArticleView() {
   const pageId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
 
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -62,30 +64,34 @@ export function ArticleView() {
 
           <div className={styles.metaRow}>
             <span className={styles.meta}>{readingTime(page.content)} min de leitura</span>
-            <span className={styles.metaDivider} aria-hidden="true">
-              ·
-            </span>
-            <Link to={`/artigo/${page.id}/editar`} className={styles.metaLink}>
-              editar
-            </Link>
-            {confirmingDelete ? (
-              <span className={styles.confirmDelete}>
-                excluir mesmo?
-                <button
-                  className={styles.confirmYes}
-                  onClick={() => deleteMutation.mutate()}
-                  disabled={deleteMutation.isPending}
-                >
-                  {deleteMutation.isPending ? "excluindo…" : "sim"}
-                </button>
-                <button className={styles.metaLink} onClick={() => setConfirmingDelete(false)}>
-                  não
-                </button>
-              </span>
-            ) : (
-              <button className={styles.metaLink} onClick={() => setConfirmingDelete(true)}>
-                excluir
-              </button>
+            {isAuthenticated && (
+              <>
+                <span className={styles.metaDivider} aria-hidden="true">
+                  ·
+                </span>
+                <Link to={`/artigo/${page.id}/editar`} className={styles.metaLink}>
+                  editar
+                </Link>
+                {confirmingDelete ? (
+                  <span className={styles.confirmDelete}>
+                    excluir mesmo?
+                    <button
+                      className={styles.confirmYes}
+                      onClick={() => deleteMutation.mutate()}
+                      disabled={deleteMutation.isPending}
+                    >
+                      {deleteMutation.isPending ? "excluindo…" : "sim"}
+                    </button>
+                    <button className={styles.metaLink} onClick={() => setConfirmingDelete(false)}>
+                      não
+                    </button>
+                  </span>
+                ) : (
+                  <button className={styles.metaLink} onClick={() => setConfirmingDelete(true)}>
+                    excluir
+                  </button>
+                )}
+              </>
             )}
           </div>
 
@@ -110,7 +116,7 @@ export function ArticleView() {
                 <LinkedPageRef
                   key={id}
                   pageId={id}
-                  onRemove={() => unlinkMutation.mutate(id)}
+                  onRemove={isAuthenticated ? () => unlinkMutation.mutate(id) : undefined}
                   removing={removingLinkId === id}
                 />
               ))}
