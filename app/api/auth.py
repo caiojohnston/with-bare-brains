@@ -24,7 +24,7 @@ def login(request: LoginRequest, response: Response):
         value=token,
         httponly=True,
         secure=True,  # True em produção com HTTPS
-        samesite="lax",
+        samesite="none",  # front e back ficam em subdominios diferentes do Railway (cross-site)
         max_age=30 * 24 * 60 * 60,  # 30 dias
     )
     return {"message": "Logged in successfully"}
@@ -32,7 +32,7 @@ def login(request: LoginRequest, response: Response):
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(key="auth_token")
+    response.delete_cookie(key="auth_token", httponly=True, secure=True, samesite="none")
     return {"message": "Logged out successfully"}
 
 
