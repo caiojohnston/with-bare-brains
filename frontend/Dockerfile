@@ -5,6 +5,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . ./
+
+# Variaveis VITE_* sao lidas em build time pelo Vite, nao em runtime — precisam
+# chegar como build arg (Railway injeta as variaveis do servico automaticamente
+# como build args em builds via Dockerfile).
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 RUN npm run build
 
 FROM caddy
