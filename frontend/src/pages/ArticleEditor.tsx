@@ -8,6 +8,7 @@ import { tagsApi } from "../api/tags";
 import { imagesApi } from "../api/images";
 import { useDebounce } from "../hooks/useDebounce";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
+import { WritingTips } from "../components/WritingTips";
 import type { PageRead } from "../types/api";
 import styles from "./ArticleEditor.module.css";
 
@@ -375,6 +376,8 @@ export function ArticleEditor() {
         >
           {saveMutation.isPending ? "Salvando…" : "Salvar"}
         </button>
+
+        <WritingTips />
 
         {draftBanner && (
           <div className={styles.banner}>
