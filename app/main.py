@@ -14,6 +14,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://with-bare-brains-production.up.railway.app",
+        "https://wbb.caiojohnston.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
