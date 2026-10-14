@@ -43,6 +43,13 @@ export interface PageRead {
   images: ImageRead[];
   outgoing_page_ids: number[];
   incoming_page_ids: number[];
+  published_at: string | null;
+}
+
+export interface PublishResult {
+  status: "published" | "already_published" | "reconciled";
+  commit_sha: string | null;
+  published_at: string;
 }
 
 export interface PageCreate {

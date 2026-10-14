@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     admin_password: str
     jwt_secret_key: str
 
+    # GitHub: publicacao de artigos (backup + diff de prosa)
+    github_token: str
+    github_content_repo: str  # formato "owner/repo"
+    github_branch: str = "main"
+    github_commit_author_name: str
+    github_commit_author_email: str
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

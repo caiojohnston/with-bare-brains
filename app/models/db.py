@@ -34,6 +34,14 @@ class Page(Base):
         nullable=False,
         index=True
     )
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+    published_content_hash: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+    )
 
     categories: Mapped[list["Category"]] = relationship(
         secondary="page_categories", back_populates="pages"

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import boto3
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, func
@@ -6,8 +8,17 @@ from slugify import slugify
 
 from app.auth import require_auth
 from app.core import get_db, settings
+from app.github_publish import (
+    GitHubConflictError,
+    GitHubPublishError,
+    article_path,
+    content_hash,
+    get_remote_file,
+    put_remote_file,
+    render_article_document,
+)
 from app.models import Category, Image, Page, Tag, PageLink
-from app.schemas import PageCreate, PageRead, PageSummary, PageUpdate
+from app.schemas import PageCreate, PageRead, PageSummary, PageUpdate, PublishResult
 
 router = APIRouter(prefix="/pages", tags=["pages"])
 
@@ -62,6 +73,7 @@ def serialize_page(page: Page) -> dict:
         "tags": page.tags,
         "outgoing_page_ids": [x.destiny_id for x in page.outgoing_links],
         "incoming_page_ids": [x.origin_id for x in page.incoming_links],
+        "published_at": page.published_at,
     }
 
 
@@ -175,6 +187,58 @@ def update_page(
     db.commit()
     page = db.scalar(get_page_query().where(Page.id == page_id))
     return serialize_page(page)
+
+
+@router.post("/{page_id}/publish", response_model=PublishResult)
+def publish_page(
+    page_id: int,
+    db: Session = Depends(get_db),
+    _: bool = Depends(require_auth),
+):
+    # Trava a linha ate o fim da transacao: impede publicacao concorrente do
+    # mesmo artigo (duplo clique, duas abas) e edicao simultanea via PATCH.
+    page = db.scalar(get_page_query().where(Page.id == page_id).with_for_update())
+    if not page:
+        raise HTTPException(404, "Page not found")
+
+    document = render_article_document(page)
+    local_hash = content_hash(document)
+    path = article_path(page)
+
+    try:
+        remote = get_remote_file(path)
+    except GitHubPublishError as e:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(e)) from e
+
+    remote_sha = remote[1] if remote else None
+    remote_hash = content_hash(remote[0]) if remote else None
+
+    if remote_hash == local_hash:
+        # GitHub ja tem exatamente este conteudo. Se o banco nao sabe disso
+        # (push anterior confirmado mas a atualizacao do banco nao chegou a
+        # acontecer), reconcilia sem criar commit novo.
+        if page.published_content_hash != local_hash:
+            page.published_content_hash = local_hash
+            page.published_at = datetime.now(timezone.utc)
+            db.commit()
+            return PublishResult(
+                status="reconciled", commit_sha=None, published_at=page.published_at
+            )
+        return PublishResult(
+            status="already_published", commit_sha=None, published_at=page.published_at
+        )
+
+    try:
+        commit_sha = put_remote_file(path, document, f"Publica {page.title}", remote_sha)
+    except GitHubConflictError as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(e)) from e
+    except GitHubPublishError as e:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(e)) from e
+
+    page.published_content_hash = local_hash
+    page.published_at = datetime.now(timezone.utc)
+    db.commit()
+    return PublishResult(status="published", commit_sha=commit_sha, published_at=page.published_at)
 
 
 @router.delete("/{page_id}", status_code=status.HTTP_204_NO_CONTENT)

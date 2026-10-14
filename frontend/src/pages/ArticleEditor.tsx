@@ -214,6 +214,23 @@ export function ArticleEditor() {
     }
   }
 
+  const [publishNotice, setPublishNotice] = useState<string | null>(null);
+
+  const publishMutation = useMutation({
+    mutationFn: () => pagesApi.publish(pageId as number),
+    onSuccess: (result) => {
+      setPublishNotice(
+        result.status === "published"
+          ? "Publicado com sucesso."
+          : result.status === "reconciled"
+            ? "Já estava no GitHub — banco sincronizado."
+            : "Nenhuma mudança desde a última publicação.",
+      );
+      queryClient.invalidateQueries({ queryKey: ["pages", pageId] });
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!draft.title.trim()) throw new Error("Título é obrigatório.");
@@ -377,6 +394,21 @@ export function ArticleEditor() {
           {saveMutation.isPending ? "Salvando…" : "Salvar"}
         </button>
 
+        <button
+          className={styles.toolbarButton}
+          onClick={() => publishMutation.mutate()}
+          disabled={pageId === null || publishMutation.isPending}
+          title={pageId === null ? "Salve o artigo antes de publicar" : "Publica no GitHub"}
+        >
+          {publishMutation.isPending ? "Publicando…" : "Publicar"}
+        </button>
+
+        {existing.data?.published_at && (
+          <span className={styles.sidecardHint}>
+            Publicado em {new Date(existing.data.published_at).toLocaleString("pt-BR")}
+          </span>
+        )}
+
         <WritingTips />
 
         {draftBanner && (
@@ -406,6 +438,13 @@ export function ArticleEditor() {
         <div className={styles.errorBanner}>
           {error}
           <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+
+      {publishNotice && (
+        <div className={styles.banner}>
+          <span>{publishNotice}</span>
+          <button onClick={() => setPublishNotice(null)}>×</button>
         </div>
       )}
 

@@ -1,4 +1,5 @@
-from typing import Any
+from datetime import datetime
+from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.image import ImageRead
 
@@ -39,6 +40,7 @@ class PageRead(PageBase):
     images: list[ImageRead]
     outgoing_page_ids: list[int]
     incoming_page_ids: list[int]
+    published_at: datetime | None
 
 
 class CategoryRead(BaseModel):
@@ -52,3 +54,9 @@ class TagRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     tag_name: str
+
+
+class PublishResult(BaseModel):
+    status: Literal["published", "already_published", "reconciled"]
+    commit_sha: str | None
+    published_at: datetime

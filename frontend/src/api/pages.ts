@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { PageCreate, PageRead, PageSummary, PageUpdate } from "../types/api";
+import type { PageCreate, PageRead, PageSummary, PageUpdate, PublishResult } from "../types/api";
 
 export interface ListPagesParams {
   q?: string;
@@ -30,6 +30,8 @@ export const pagesApi = {
     api.patch<PageRead>(`/pages/${id}`, payload),
 
   remove: (id: number) => api.delete<void>(`/pages/${id}`),
+
+  publish: (id: number) => api.post<PublishResult>(`/pages/${id}/publish`),
 
   link: (originId: number, destinyId: number) =>
     api.post<{ origin_id: number; destiny_id: number }>(
